@@ -137,31 +137,32 @@
 (test compiler-macroexpand
   (is (equal '(memq x (foo))
 	     (compiler-macroexpand '(memb x (foo) :test #'eq))))
-  (is (eq (first (compiler-macroexpand '(memb x '(a b) :test #'eq)))
-	  ;; might be weird if an impl has a cmf on let, but c'mon.
-	  'let)))
+  (is (not
+       (eq (first (compiler-macroexpand '(memb x '(a b) :test #'eq)))
+	   'memq))))
 
 (test compiler-macroexpand-environment
-  (let ((form '(memb x (foo) :test #'eq)))
-    ;; we have to use eval to make sure it's really the same form.
-    (is (eql form
-	     (eval
-	      `(macrolet ((testmacro (form &environment env)
-			    `',(compiler-macroexpand form env)))
-		 (locally (declare (notinline memb))
-		   (testmacro ,form)))))
-	"~s does not properly respect ~s declarations"
-	'compiler-macroexpand
-	'notinline)
-    (is (eql form
-	     (eval
-	      `(macrolet ((testmacro (form &environment env)
-			    `',(compiler-macroexpand form env)))
-		 (flet ((memb (&rest args) 11))
-		   (declare (ignorable #'memb))
-		   (testmacro ,form)))))
-	"~s does not properly respect lexical shadowing of functions"
-	'compiler-macroexpand)))
+  ;; we have to use eval to make sure it's really the same form.
+  (is-false
+   (nth-value
+    1
+    (in-environment env testmacro
+	(locally (declare (notinline memb)) (testmacro))
+      (compiler-macroexpand '(memb x (foo) :test #'eq) env)))
+   "~s does not properly respect ~s declarations"
+   'compiler-macroexpand
+   'notinline)
+  (is-false
+   (nth-value
+    1
+    (in-environment env testmacro
+	(flet ((memb (&rest args) 11))
+	  (declare (ignorable #'memb))
+	  (testmacro))
+      (compiler-macroexpand '(memb x (foo) :test #'eq) env)))
+   "~s does not properly respect ~s declarations"
+   'compiler-macroexpand
+   'notinline))
 
 (test compiler-macroexpand-hook
   (let* ((*counter* 0)
