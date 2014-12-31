@@ -10,6 +10,9 @@
 (deftype foo (&optional dim) `(array integer ,dim))
 (deftype bar () '(foo (7)))
 
+(defvar *x*)
+(defconstant +y+ t)
+
 (test typexpand-1
   (is (equal '(array integer *) (typexpand-1 '(foo))))
   (is (equal '(array integer (4 * 7)) (typexpand-1 '(foo (4 * 7)))))
@@ -43,6 +46,27 @@
 	 (testmacro))
      (subtypep (variable-type 'x env) 'symbol))))
 
+(test specialp
+  (is-false (specialp '+y+))
+  (is-true (specialp '*x*))
+  (is-false (in-environment
+		env testmacro
+		(let ((x nil))
+		  (declare (ignorable x))
+		  (testmacro))
+	      (specialp 'x env)))
+  (is-true (in-environment
+	       env testmacro
+	       (let ((x nil))
+		 (declare (special x) (ignorable x))
+		 (testmacro))
+	     (specialp 'x env)))
+  (is-false (in-environment
+		env testmacro
+		(let ((*x* nil))
+		  (testmacro))
+	      (specialp 'x env))))
+
 (test function-type-local
   ;; no subtypep on function types. sad, no?
   (is (tree-equal
@@ -56,8 +80,6 @@
        ;; sbcl does normalization to its weird ideas about VALUES.
        #-sbcl'(function () symbol)
        #+sbcl'(function () (values &optional symbol &rest t)))))
-
-(defconstant +y+ t)
 
 (test constant-form-value
   (is-false (constant-form-value nil))

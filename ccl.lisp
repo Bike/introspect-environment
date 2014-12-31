@@ -15,6 +15,9 @@
 
 ;;; implementations implementing the CLtL2 non-standard have this easy.
 
+(defun specialp (name &optional env)
+  (eq (variable-information name env) :special))
+
 (defun variable-type (name &optional env)
   (or (cdr (assoc 'type (nth-value 2 (variable-information name env))))
       't))

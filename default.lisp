@@ -12,6 +12,11 @@
 ;;; so basically degrade "gracefully".  except for parse-*macro,
 ;;;  which has to work anyway.
 
+(defun specialp (name &optional env)
+  "This implementation is not supported; this function always returns NIL."
+  (declare (ignore name env))
+  nil)
+
 (defun variable-type (name &optional env)
   "This implementation is not supported; this function doesn't know how to query an environment for type declaration information, and so always returns T."
   (declare (ignore env))
@@ -58,10 +63,12 @@
   (values type nil))
 
 ;;; this is basically intended to be functional, 
-;;; in that it will deal with well-formed code without spurious warnings/etc., 
-;;; without being terribly... good.
-;;; it's bad in that the macroexpander will cons and there's basically no error checking.
-;;; but I think that's ok, because this is just the default for when the implementation doesn't expose its own functionality.
+;;;  in that it will deal with well-formed code without spurious
+;;;  warnings/etc., without being terribly... good.
+;;; it's bad in that the macroexpander will cons and there's basically
+;;;  no error checking. but I think that's ok, because this is just
+;;;  the default for when the implementation doesn't expose its own
+;;;  functionality. They all HAVE the functionality, so...
 
 ;;; though TODO: figure out how to deal with docstrings
 
@@ -71,7 +78,8 @@
       name))
 
 (defun %parse-macro (name lambda-list body cm-p)
-  (check-type name (or symbol (cons (eql setf) (cons symbol null))) "a function name")
+  (check-type name (or symbol (cons (eql setf) (cons symbol null)))
+	      "a function name")
   (let ((whole (gensym "WHOLE"))
 	(env (gensym "ENV"))
 	(rebind-whole nil)
