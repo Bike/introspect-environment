@@ -182,9 +182,8 @@
 	  (declare (ignorable #'memb))
 	  (testmacro))
       (compiler-macroexpand '(memb x (foo) :test #'eq) env)))
-   "~s does not properly respect ~s declarations"
-   'compiler-macroexpand
-   'notinline))
+   "~s does not properly respect shadowing"
+   'compiler-macroexpand))
 
 (test compiler-macroexpand-hook
   (let* ((*counter* 0)
