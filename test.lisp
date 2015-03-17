@@ -70,30 +70,20 @@
 (test function-type-local
   ;; no subtypep on function types. sad, no?
   (is (tree-equal
+       ;; sbcl does normalization to its weird ideas about VALUES.
+       #-sbcl'(function () symbol)
+       #+sbcl'(function () (values &optional symbol &rest t))
        (in-environment
 	   env testmacro
 	   (flet ((x () 'x))
 	     (declare (ftype (function () symbol) x)
 		      (ignorable #'x))
 	     (testmacro))
-	 (function-type 'x env))
-       ;; sbcl does normalization to its weird ideas about VALUES.
-       #-sbcl'(function () symbol)
-       #+sbcl'(function () (values &optional symbol &rest t)))))
+	 (function-type 'x env)))))
 
 (test constant-form-value
   (is-false (constant-form-value nil))
-  (is-true (constant-form-value '+y+))
-  (multiple-value-bind (xv yv)
-      (in-environment
-	  env testmacro
-	  (symbol-macrolet ((x nil))
-	    (testmacro))
-	(assert (constantp 'x env))
-	(values (constant-form-value 'x env)
-		(constant-form-value '+y+ env)))
-    (is-false xv)
-    (is-true yv)))
+  (is-true (constant-form-value '+y+)))
 
 (test policy
   (multiple-value-bind (p pq)
@@ -111,9 +101,9 @@
 (test function-type-global
   ;; sbcl does normalization to its weird ideas about VALUES.
   (is (tree-equal
-       (function-type 'memq)
        #-sbcl'(function (t list) list)
-       #+sbcl'(function (t list) (values &optional list &rest t)))))
+       #+sbcl'(function (t list) (values &optional list &rest t))
+       (function-type 'memq))))
 
 (declaim (type integer *foo*))
 (test variable-type-global
@@ -164,16 +154,6 @@
 	   'memq))))
 
 (test compiler-macroexpand-environment
-  ;; we have to use eval to make sure it's really the same form.
-  (is-false
-   (nth-value
-    1
-    (in-environment env testmacro
-	(locally (declare (notinline memb)) (testmacro))
-      (compiler-macroexpand '(memb x (foo) :test #'eq) env)))
-   "~s does not properly respect ~s declarations"
-   'compiler-macroexpand
-   'notinline)
   (is-false
    (nth-value
     1
