@@ -4,24 +4,6 @@
 
 (in-package #:introspect-environment)
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  ;; what a pain
-  ;; c-f-v is in sb-int and therefore not good to export.
-  ;;  as in, it's unstable. would be nice to mention this in docs.
-  ;;  would be nice to convince devs to move it.
-  ;; we use sb-kernel too.
-  (shadowing-import
-   '(sb-ext:typexpand-1 sb-ext:typexpand
-     sb-cltl2:function-information sb-cltl2:variable-information
-     sb-cltl2:declaration-information sb-cltl2:parse-macro
-     sb-int:constant-form-value)
-   '#:introspect-environment)
-  (export '(sb-ext:typexpand-1 sb-ext:typexpand
-	    sb-cltl2:function-information sb-cltl2:variable-information
-	    sb-cltl2:declaration-information sb-cltl2:parse-macro
-	    sb-int:constant-form-value)
-	  '#:introspect-environment))
-
 ;;; implementations implementing the CLtL2 non-standard have this easy.
 
 (defun specialp (name &optional env)

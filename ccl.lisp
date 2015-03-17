@@ -4,15 +4,6 @@
 
 (in-package #:introspect-environment)
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  ;; pain, pain, pain
-  (shadowing-import '(ccl:function-information ccl:variable-information
-		      ccl:declaration-information ccl:parse-macro)
-		    '#:introspect-environment)
-  (export '(ccl:function-information ccl:variable-information
-	    ccl:declaration-information ccl:parse-macro)
-	  '#:introspect-environment))
-
 ;;; implementations implementing the CLtL2 non-standard have this easy.
 
 (defun specialp (name &optional env)
