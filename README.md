@@ -4,4 +4,4 @@ Quite a bit of information is available at the time a macro or compiler-macro ru
 
 This info ought to be accessible through the standard &environment parameters, but it is not. Several implementations keep the information for their own purposes but do not make it available to user programs, because there is no standard mechanism to do so.
 
-This library uses implementation-specific hooks to make information available to users. This is currently supported on SBCL and CCL. Other implementations have implementations of the functions that do as much as they can and/or provide reasonable defaults.
+This library uses implementation-specific hooks to make information available to users. This is currently supported on SBCL, CCL, and CMUCL. Other implementations have implementations of the functions that do as much as they can and/or provide reasonable defaults.

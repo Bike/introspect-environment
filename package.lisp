@@ -8,8 +8,8 @@
   (:export #:typexpand #:typexpand-1)
   (:export #:function-information #:variable-information
 	   #:declaration-information #:parse-macro)
-  #+(or sbcl ccl) ; implementations with cltl2
-  (:shadowing-import-from #+sbcl "SB-CLTL2" #+ccl "CCL"
+  #+(or sbcl ccl cmucl) ; implementations with cltl2
+  (:shadowing-import-from #+sbcl "SB-CLTL2" #+ccl "CCL" #+cmucl "EXT"
 			  #:function-information #:variable-information
 			  #:declaration-information #:parse-macro)
   #+sbcl

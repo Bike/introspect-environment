@@ -9,7 +9,8 @@
 	       (:file "expander")
 	       #+sbcl (:file "sbcl")
 	       #+ccl (:file "ccl")
-	       #-(or sbcl ccl) (:file "default")
+	       #+cmucl (:file "cmucl")
+	       #-(or sbcl ccl cmucl) (:file "default")
 	       (:file "doc"))
   ;; cargo culted from bordeaux
   :in-order-to ((asdf:test-op

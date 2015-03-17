@@ -131,19 +131,21 @@
 (test compiler-macroexpand-1
   (is (equal '(memq x (foo))
 	     (compiler-macroexpand-1 '(memb x (foo) :test #'eq))))
-  #+ccl
-  (skip "CCL's compiler macros don't deal with ~s forms as they should." 'funcall)
-  #-ccl
+  #+(or ccl cmucl)
+  (skip "~a's compiler macros do not correctly expand ~s forms"
+	(lisp-implementation-type) 'funcall)
+  #-(or ccl cmucl)
   (is (equal '(memq x (foo))
 	     (compiler-macroexpand-1
 	      '(funcall #'memb x (foo) :test #'eq))))
   (let ((form '(memb x (foo)))
-	#-ccl
+	#-(or ccl cmucl)
 	(funcall-form '(funcall #'memb x (foo))))
     (is (eql form (compiler-macroexpand-1 form)))
-    #+ccl
-    (skip "CCL's compiler macros don't deal with ~s forms as they should." 'funcall)
-    #-ccl
+    #+(or ccl cmucl)
+    (skip "~a's compiler macros do not correctly expand ~s forms"
+	  (lisp-implementation-type) 'funcall)
+    #-(or ccl cmucl)
     (is (eql funcall-form (compiler-macroexpand-1 funcall-form)))))
 
 (test compiler-macroexpand
