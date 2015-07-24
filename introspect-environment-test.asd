@@ -1,4 +1,7 @@
 (asdf:defsystem #:introspect-environment-test
+  :description "Tests for i-e. Use (asdf:test-system '#:introspect-environment)."
+  :author "Bike <aeshtaer@gmail.com>"
+  :license "WTFPL"
   :depends-on (#:introspect-environment #:fiveam)
   :version "0.1"
   :components ((:file "test"))
