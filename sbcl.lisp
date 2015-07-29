@@ -44,21 +44,10 @@
   ;; largely copied from sbcl's define-compiler-macro, unsurprisingly.
   (declare (ignore env)) ; env is just for evenness with parse-macro
   ;; variables for the expansion
-  (let ((whole-var (gensym "WHOLE"))
-	(env-var (gensym "ENV")))
-    (multiple-value-bind (body local-decls doc)
-	(sb-kernel:parse-defmacro
-	 lambda-list whole-var body name
-	 'define-compiler-macro
-	 ;; the d-c-m context tells sbcl to build the body to handle
-	 ;;  FUNCALL forms correctly.
-	 ;; at least, "correctly" if you don't want a compiler macro on
-	 ;;  CL:FUNCALL, which is undefined for users anyway.
-	 :environment env-var)
-      (declare (ignore doc)) ; welp.
-      `(lambda (,whole-var ,env-var)
-	 ,@local-decls
-	 ,body))))
+  (values
+   (sb-int:make-macro-lambda `(compiler-macro ,name)
+			     lambda-list body 'define-compiler-macro
+			     name)))
 
 ;;; alternate sbcl-specific definitions, probably less stable than the cltl2 half-standard
 
