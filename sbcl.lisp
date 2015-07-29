@@ -44,10 +44,33 @@
   ;; largely copied from sbcl's define-compiler-macro, unsurprisingly.
   (declare (ignore env)) ; env is just for evenness with parse-macro
   ;; variables for the expansion
-  (values
-   (sb-int:make-macro-lambda `(compiler-macro ,name)
-			     lambda-list body 'define-compiler-macro
-			     name)))
+  #+#.(cl:if (cl:find-symbol "MAKE-MACRO-LAMBDA" "SB-INT")
+	     '(and) '(or))
+  (return-from parse-compiler-macro
+    (values
+     (sb-int:make-macro-lambda `(compiler-macro ,name)
+			       lambda-list body 'define-compiler-macro
+			       name)))
+  #+#.(cl:if (cl:find-symbol "PARSE-DEFMACRO" "SB-KERNEL")
+	     '(and) '(or))
+  (return-from parse-compiler-macro
+    (let ((whole-var (gensym "WHOLE"))
+	  (env-var (gensym "ENV")))
+      (multiple-value-bind (body local-decls doc)
+	  (sb-kernel:parse-defmacro
+	   lambda-list whole-var body name
+	   'define-compiler-macro
+	   ;; the d-c-m context tells sbcl to build the body to handle
+	   ;;  FUNCALL forms correctly.
+	   ;; at least, "correctly" if you don't want a compiler macro
+	   ;;  on CL:FUNCALL, which is undefined for users anyway.
+	   :environment env-var)
+	(declare (ignore doc)) ; welp.
+	`(lambda (,whole-var ,env-var)
+	   ,@local-decls
+	   ,body))))
+  (error
+   "Don't know how to PARSE-COMPILER-MACRO on this SBCL version."))
 
 ;;; alternate sbcl-specific definitions, probably less stable than the cltl2 half-standard
 
