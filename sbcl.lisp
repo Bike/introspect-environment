@@ -50,7 +50,11 @@
     (values
      (sb-int:make-macro-lambda `(compiler-macro ,name)
 			       lambda-list body 'define-compiler-macro
-			       name)))
+			       name
+			       ;; weirdness here to avoid breaking compatibility
+			       ;; with sbcl 1.2.13-15
+			       :allow-other-keys t
+			       :accessor (find-symbol "COMPILER-MACRO-ARGS" "SB-C"))))
   #+#.(cl:if (cl:find-symbol "PARSE-DEFMACRO" "SB-KERNEL")
 	     '(and) '(or))
   (return-from parse-compiler-macro
