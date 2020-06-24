@@ -48,8 +48,60 @@
   `(symbol-macrolet ((speed 1) (safety 1) (space 1) (debug 1) (compilation-speed 1))
      ,expr))
 
-;; better hope you don't actually need type expansions!
+;; NOTE: Implementation-specific versions are kept in this file
+;; because the rest of the protocol isn't supported for them.
+;; If it is in the future, they should get their own files.
+;; NOTE: Also the second return value is pretty unreliable
+;; for these.
 
+#+(or abcl allegro clisp ecl lispworks)
+(progn
+#+(or abcl ecl)
+(defun expand-deftype-1 (type)
+  ;; See ABCL, ECL expand-deftype
+  (multiple-value-bind (base args)
+      (if (atom type)
+          (values type nil)
+          (values (car type) (cdr type)))
+    (let ((expander (system::get-sysprop base 'system::DEFTYPE-DEFINITION)))
+      (if expander
+          (values
+           #+ecl(funcall expander args)
+           #+abcl(apply expander args)
+           t)
+          (values type nil)))))
+
+(defun typexpand-1 (type &optional env)
+  (declare (type (or symbol cons) type)
+           #+(or abcl ecl lispworks) (ignore env))
+  #+(or abcl ecl)
+  (expand-deftype-1 type)
+  #+allegro
+  (excl::deftype-expand-1 type env)
+  #+clisp
+  (ext:type-expand-1 type)
+  #+lispworks
+  (type::expand-user-type-1 type))
+
+(defun typexpand (type &optional env)
+  (declare (type (or symbol cons) type)
+           #+(or abcl ecl lispworks) (ignore env))
+  #+abcl
+  (system::expand-deftype type)
+  #+allegro
+  (excl:normalize-type type
+                       :default type
+                       :environment env)
+  #+clisp
+  (ext:type-expand type env)
+  #+ecl
+  (si::expand-deftype type)
+  #+lispworks
+  (type::expand-user-type type))
+)
+
+#-(or abcl allegro clisp ecl lispworks)
+(progn
 (defun typexpand (type &optional env)
   "This implementation is not supported; no types are expanded."
   (declare (ignore env))
@@ -61,6 +113,7 @@
   (declare (ignore env))
   (check-type type (or symbol cons class) "a type specifier")
   (values type nil))
+)
 
 ;;; this is basically intended to be functional, 
 ;;;  in that it will deal with well-formed code without spurious
