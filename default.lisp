@@ -72,7 +72,7 @@
           (values type nil)))))
 
 (defun typexpand-1 (type &optional env)
-  (declare (type (or symbol cons) type)
+  (declare (type (or symbol cons class) type)
            #+(or abcl ecl lispworks) (ignore env))
   #+(or abcl ecl)
   (expand-deftype-1 type)
@@ -84,7 +84,7 @@
   (type::expand-user-type-1 type))
 
 (defun typexpand (type &optional env)
-  (declare (type (or symbol cons) type)
+  (declare (type (or symbol cons class) type)
            #+(or abcl ecl lispworks) (ignore env))
   #+abcl
   (system::expand-deftype type)
