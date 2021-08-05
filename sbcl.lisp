@@ -40,41 +40,49 @@
 	 ;; (sbcl is fine though, woo)
 	 ,expr))))
 
-(defun parse-compiler-macro (name lambda-list body &optional env)
-  ;; largely copied from sbcl's define-compiler-macro, unsurprisingly.
-  (declare (ignore env)) ; env is just for evenness with parse-macro
-  ;; variables for the expansion
-  #+#.(cl:if (cl:find-symbol "MAKE-MACRO-LAMBDA" "SB-INT")
-	     '(and) '(or))
-  (return-from parse-compiler-macro
-    (values
-     (sb-int:make-macro-lambda `(compiler-macro ,name)
-			       lambda-list body 'define-compiler-macro
-			       name
-			       ;; weirdness here to avoid breaking compatibility
-			       ;; with sbcl 1.2.13-15
-			       :allow-other-keys t
-			       :accessor (find-symbol "COMPILER-MACRO-ARGS" "SB-C"))))
-  #+#.(cl:if (cl:find-symbol "PARSE-DEFMACRO" "SB-KERNEL")
-	     '(and) '(or))
-  (return-from parse-compiler-macro
-    (let ((whole-var (gensym "WHOLE"))
-	  (env-var (gensym "ENV")))
-      (multiple-value-bind (body local-decls doc)
-	  (sb-kernel:parse-defmacro
-	   lambda-list whole-var body name
-	   'define-compiler-macro
-	   ;; the d-c-m context tells sbcl to build the body to handle
-	   ;;  FUNCALL forms correctly.
-	   ;; at least, "correctly" if you don't want a compiler macro
-	   ;;  on CL:FUNCALL, which is undefined for users anyway.
-	   :environment env-var)
-	(declare (ignore doc)) ; welp.
-	`(lambda (,whole-var ,env-var)
-	   ,@local-decls
-	   ,body))))
-  (error
-   "Don't know how to PARSE-COMPILER-MACRO on this SBCL version."))
+(macrolet
+    ((body ()
+       ;; This function uses SBCL internals and is therefore brittle.
+       ;; This macrolet allows an implementation appropriate to the SBCL
+       ;; version to be chosen at build time.
+       (let ((make-macro-lambda (find-symbol "MAKE-MACRO-LAMBDA" "SB-INT"))
+             (parse-defmacro (find-symbol "PARSE-DEFMACRO" "SB-KERNEL")))
+         (cond (make-macro-lambda
+                `(values
+                  (,make-macro-lambda
+                   (list 'compiler-macro name)
+		   lambda-list body
+                   'define-compiler-macro
+		   name
+		   ;; weirdness here to avoid breaking compatibility with
+                   ;; sbcl 1.2.13-15
+		   :allow-other-keys t
+		   :accessor (find-symbol "COMPILER-MACRO-ARGS" "SB-C"))))
+               (parse-defmacro
+                `(let ((whole-var (gensym "WHOLE"))
+	               (env-var (gensym "ENV")))
+                   (multiple-value-bind (body local-decls doc)
+	               (,parse-defmacro
+	                lambda-list whole-var body name
+	                'define-compiler-macro
+	                ;; the d-c-m context tells sbcl to build the body to
+                        ;; handle FUNCALL forms correctly.
+	                ;; at least, "correctly" if you don't want a compiler
+                        ;; macro on CL:FUNCALL, which is undefined for users
+                        ;; anyway.
+	                :environment env-var)
+	             (declare (ignore doc)) ; welp.
+	             `(lambda (,whole-var ,env-var)
+	                ,@local-decls
+	                ,body))))
+               (t
+                (warn
+                 "Don't know how to PARSE-COMPILER-MACRO on this SBCL version.")
+                '(error
+                  "Don't know how to PARSE-COMPILER-MACRO on this SBCL version."))))))
+  (defun parse-compiler-macro (name lambda-list body &optional env)
+    (declare (ignore env)) ; env is just for evenness with parse-macro
+    (body)))
 
 ;;; alternate sbcl-specific definitions, probably less stable than the cltl2 half-standard
 
