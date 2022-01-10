@@ -10,7 +10,8 @@
 	       #+sbcl (:file "sbcl")
 	       #+ccl (:file "ccl")
 	       #+cmucl (:file "cmucl")
-	       #-(or sbcl ccl cmucl) (:file "default")
+	       #+clasp (:file "clasp")
+	       #-(or sbcl ccl cmucl clasp) (:file "default")
 	       (:file "doc"))
   ;; cargo culted from bordeaux
   :in-order-to ((asdf:test-op
