@@ -79,7 +79,7 @@
   #+allegro
   (excl::deftype-expand-1 type env)
   #+clisp
-  (ext:type-expand-1 type)
+  (ext:type-expand type t)
   #+lispworks
   (type::expand-user-type-1 type))
 
