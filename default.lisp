@@ -100,7 +100,45 @@
   (type::expand-user-type type))
 )
 
-#-(or abcl allegro clisp ecl lispworks)
+;;; CL-Amiga exposes its deftype expander table to Lisp via
+;;; CLAMIGA::%TYPE-EXPANDER, which returns the `deftype' expander
+;;; closure registered for a symbol (or NIL when the symbol names no
+;;; user deftype).  The closure takes the compound type's arguments —
+;;; the expander for (deftype foo (a b) ...) is applied to (a b); an
+;;; atom deftype's expander takes no arguments.  Built-in/primitive
+;;; type names (INTEGER, STRING, ...) have no expander and are returned
+;;; unchanged.  This gives a real TYPEXPAND, as needed by callers such
+;;; as serapeum's EXPLODE-TYPE (control-flow.lisp).
+#+cl-amiga
+(progn
+(defun typexpand-1 (type &optional env)
+  (declare (ignore env))
+  (check-type type (or symbol cons class) "a type specifier")
+  (if (typep type 'class)
+      (values type nil)
+      (multiple-value-bind (head args)
+          (if (consp type)
+              (values (car type) (cdr type))
+              (values type nil))
+        (if (symbolp head)
+            (let ((expander (clamiga::%type-expander head)))
+              (if expander
+                  (values (apply expander args) t)
+                  (values type nil)))
+            (values type nil)))))
+
+(defun typexpand (type &optional env)
+  (declare (ignore env))
+  (check-type type (or symbol cons class) "a type specifier")
+  (let ((ever nil))
+    (loop
+      (multiple-value-bind (new expanded) (typexpand-1 type)
+        (if expanded
+            (setf type new ever t)
+            (return (values type ever)))))))
+)
+
+#-(or abcl allegro clisp ecl lispworks cl-amiga)
 (progn
 (defun typexpand (type &optional env)
   "This implementation is not supported; no types are expanded."
