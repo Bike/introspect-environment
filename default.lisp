@@ -100,8 +100,8 @@
   (type::expand-user-type type))
 )
 
-;;; CL-Amiga exposes its deftype expander table to Lisp via
-;;; CLAMIGA::%TYPE-EXPANDER, which returns the `deftype' expander
+;;; AmiLisp exposes its deftype expander table to Lisp via
+;;; AMILISP::%TYPE-EXPANDER, which returns the `deftype' expander
 ;;; closure registered for a symbol (or NIL when the symbol names no
 ;;; user deftype).  The closure takes the compound type's arguments —
 ;;; the expander for (deftype foo (a b) ...) is applied to (a b); an
@@ -109,7 +109,7 @@
 ;;; type names (INTEGER, STRING, ...) have no expander and are returned
 ;;; unchanged.  This gives a real TYPEXPAND, as needed by callers such
 ;;; as serapeum's EXPLODE-TYPE (control-flow.lisp).
-#+cl-amiga
+#+amilisp
 (progn
 (defun typexpand-1 (type &optional env)
   (declare (ignore env))
@@ -121,7 +121,7 @@
               (values (car type) (cdr type))
               (values type nil))
         (if (symbolp head)
-            (let ((expander (clamiga::%type-expander head)))
+            (let ((expander (amilisp::%type-expander head)))
               (if expander
                   (values (apply expander args) t)
                   (values type nil)))
@@ -138,7 +138,7 @@
             (return (values type ever)))))))
 )
 
-#-(or abcl allegro clisp ecl lispworks cl-amiga)
+#-(or abcl allegro clisp ecl lispworks amilisp)
 (progn
 (defun typexpand (type &optional env)
   "This implementation is not supported; no types are expanded."
