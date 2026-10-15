@@ -54,7 +54,7 @@
 ;; NOTE: Also the second return value is pretty unreliable
 ;; for these.
 
-#+(or abcl allegro clisp ecl lispworks)
+#+(or abcl allegro amilisp clisp ecl lispworks)
 (progn
 #+(or abcl ecl)
 (defun expand-deftype-1 (type)
@@ -78,6 +78,8 @@
   (expand-deftype-1 type)
   #+allegro
   (excl::deftype-expand-1 type env)
+  #+amilisp
+  (amilisp:typexpand-1 type env)
   #+clisp
   (ext:type-expand type t)
   #+lispworks
@@ -92,6 +94,8 @@
   (excl:normalize-type type
                        :default type
                        :environment env)
+  #+amilisp
+  (amilisp:typexpand type env)
   #+clisp
   (ext:type-expand type env)
   #+ecl
@@ -100,7 +104,7 @@
   (type::expand-user-type type))
 )
 
-#-(or abcl allegro clisp ecl lispworks)
+#-(or abcl allegro amilisp clisp ecl lispworks)
 (progn
 (defun typexpand (type &optional env)
   "This implementation is not supported; no types are expanded."
